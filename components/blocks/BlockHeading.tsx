@@ -1,6 +1,7 @@
 'use client';
 
 import { Block } from '@/lib/types';
+import { getAllAdvancedStyles } from '@/lib/styling-utils';
 
 interface BlockHeadingProps {
   block: Block;
@@ -18,6 +19,7 @@ export function BlockHeading({ block, isSelected, onSelect, onRemove }: BlockHea
     color: block.properties.color || '#333',
     fontWeight: 600,
     marginBottom: '0.5rem',
+    ...getAllAdvancedStyles(block),
   };
 
   return (

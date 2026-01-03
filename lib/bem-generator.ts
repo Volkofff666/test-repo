@@ -1,4 +1,5 @@
 import { Block } from './types';
+import { getAllAdvancedStyles, cssPropertiesToLines } from './styling-utils';
 
 export interface GeneratedCode {
   html: string;
@@ -167,6 +168,10 @@ function generateBlockCSS(block: Block, cssRules: Set<string>): void {
       }
       break;
   }
+  
+  // Add advanced styling
+  const advancedStyles = getAllAdvancedStyles(block);
+  baseStyles.push(...cssPropertiesToLines(advancedStyles));
   
   if (baseStyles.length > 0) {
     cssRules.add(`.${className} {\n${baseStyles.join('\n')}\n}`);

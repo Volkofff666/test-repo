@@ -1,7 +1,15 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useRef, useCallback, useEffect, ReactNode } from 'react';
 import { Block, BlockContextType } from './types';
+import {
+  createHistoryManager,
+  pushHistory,
+  undo as performUndo,
+  redo as performRedo,
+  canUndo as checkCanUndo,
+  canRedo as checkCanRedo,
+} from './history-manager';
 
 const BlockContext = createContext<BlockContextType | undefined>(undefined);
 
@@ -10,13 +18,6 @@ function generateId(prefix: string) {
     return `${prefix}_${crypto.randomUUID()}`;
   }
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function cloneBlocks(blocks: Block[]): Block[] {
-  if (typeof structuredClone === 'function') {
-    return structuredClone(blocks);
-  }
-  return JSON.parse(JSON.stringify(blocks)) as Block[];
 }
 
 function findBlockById(blocks: Block[], id: string): Block | null {
@@ -148,124 +149,195 @@ export function BlockProvider({ children }: { children: ReactNode }) {
   const [projectName, setProjectNameState] = useState('Untitled Project');
   const [projectCreatedAt, setProjectCreatedAt] = useState(() => new Date().toISOString());
 
-  const [history, setHistory] = useState<Block[][]>([]);
+  const historyRef = useRef(createHistoryManager());
+  const [canUndoState, setCanUndoState] = useState(false);
+  const [canRedoState, setCanRedoState] = useState(false);
 
-  const addBlock = (block: Block) => {
-    setBlocks(prev => [...prev, block]);
-  }; 
+  useEffect(() => {
+    setCanUndoState(checkCanUndo(historyRef.current));
+    setCanRedoState(checkCanRedo(historyRef.current));
+  }, [blocks]);
 
-  const removeBlock = (id: string) => {
+  const addBlock = useCallback((block: Block) => {
+    setBlocks(prev => {
+      const newBlocks = [...prev, block];
+      historyRef.current = pushHistory(historyRef.current, prev, `Added ${block.type}`);
+      setCanUndoState(true);
+      setCanRedoState(false);
+      return newBlocks;
+    });
+  }, []);
+
+  const removeBlock = useCallback((id: string) => {
     setBlocks(prev => {
       const result = removeBlockById(prev, id);
       if (selectedBlockId && !findBlockById(result.blocks, selectedBlockId)) {
         setSelectedBlockId(null);
       }
+      if (result.removed) {
+        historyRef.current = pushHistory(
+          historyRef.current,
+          prev,
+          `Removed ${result.removed.type}`
+        );
+        setCanUndoState(true);
+        setCanRedoState(false);
+      }
       return result.blocks;
     });
-  };
+  }, [selectedBlockId]);
 
-  const updateBlock = (id: string, properties: Partial<Block['properties']>) => {
-    setBlocks(prev => {
-      const updateRecursive = (list: Block[]): Block[] => {
-        return list.map(block => {
-          if (block.id === id) {
+  const updateBlock = useCallback(
+    (id: string, properties: Partial<Block['properties']>) => {
+      setBlocks(prev => {
+        const block = findBlockById(prev, id);
+        const blockType = block?.type || 'block';
+        const newBlocks = prev.map(b => {
+          if (b.id === id) {
             return {
-              ...block,
+              ...b,
               properties: {
-                ...block.properties,
+                ...b.properties,
                 ...properties,
               },
             };
           }
-          const children = block.properties.children;
+          const children = b.properties.children;
           if (children?.length) {
             return {
-              ...block,
+              ...b,
               properties: {
-                ...block.properties,
-                children: updateRecursive(children),
+                ...b.properties,
+                children: children.map((child: Block) => {
+                  if (child.id === id) {
+                    return {
+                      ...child,
+                      properties: {
+                        ...child.properties,
+                        ...properties,
+                      },
+                    };
+                  }
+                  return child;
+                }),
               },
             };
           }
-          return block;
+          return b;
         });
-      };
+        historyRef.current = pushHistory(
+          historyRef.current,
+          prev,
+          `Updated ${blockType} properties`
+        );
+        setCanUndoState(true);
+        setCanRedoState(false);
+        return newBlocks;
+      });
+    },
+    []
+  );
 
-      return updateRecursive(prev);
-    });
-  };
-
-  const selectBlock = (id: string | null) => {
+  const selectBlock = useCallback((id: string | null) => {
     setSelectedBlockId(id);
-  };
+  }, []);
 
-  const getSelectedBlock = (): Block | null => {
+  const getSelectedBlock = useCallback((): Block | null => {
     if (!selectedBlockId) return null;
     return findBlockById(blocks, selectedBlockId);
-  };
+  }, [blocks, selectedBlockId]);
 
-  const replaceBlocks = (nextBlocks: Block[]) => {
+  const replaceBlocks = useCallback((nextBlocks: Block[]) => {
     setBlocks(nextBlocks);
     setSelectedBlockId(null);
-    setHistory([]);
-  };
+    historyRef.current = createHistoryManager();
+    setCanUndoState(false);
+    setCanRedoState(false);
+  }, []);
 
   const loadProject: BlockContextType['loadProject'] = project => {
     setProjectId(project.id);
     setProjectNameState(project.name);
     setProjectCreatedAt(project.createdAt ?? new Date().toISOString());
     replaceBlocks(project.blocks);
+    historyRef.current = pushHistory(
+      historyRef.current,
+      [],
+      `Loaded project: ${project.name}`
+    );
+    setCanUndoState(true);
+    setCanRedoState(false);
   };
 
   const setProjectName: BlockContextType['setProjectName'] = name => {
     setProjectNameState(name);
   };
 
-  const moveBlock: BlockContextType['moveBlock'] = (blockId, targetParentId, targetIndex) => {
-    setBlocks(prev => {
-      const source = findParentAndIndex(prev, blockId);
-      if (!source) return prev;
+  const moveBlock = useCallback(
+    (blockId: string, targetParentId: string | null, targetIndex: number) => {
+      setBlocks(prev => {
+        const source = findParentAndIndex(prev, blockId);
+        if (!source) return prev;
 
-      if (targetParentId) {
-        const parent = findBlockById(prev, targetParentId);
-        if (!parent || parent.type !== 'container') {
+        if (targetParentId) {
+          const parent = findBlockById(prev, targetParentId);
+          if (!parent || parent.type !== 'container') {
+            return prev;
+          }
+        }
+
+        const removedResult = removeBlockById(prev, blockId);
+        if (!removedResult.removed) return prev;
+
+        if (targetParentId && containsId(removedResult.removed, targetParentId)) {
           return prev;
         }
-      }
 
-      const removedResult = removeBlockById(prev, blockId);
-      if (!removedResult.removed) return prev;
-
-      if (targetParentId && containsId(removedResult.removed, targetParentId)) {
-        return prev;
-      }
-
-      let nextIndex = targetIndex;
-      if (source.parentId === targetParentId) {
-        if (source.index < targetIndex) {
-          nextIndex = targetIndex - 1;
+        let nextIndex = targetIndex;
+        if (source.parentId === targetParentId) {
+          if (source.index < targetIndex) {
+            nextIndex = targetIndex - 1;
+          }
+          if (source.index === nextIndex) {
+            return prev;
+          }
         }
-        if (source.index === nextIndex) {
-          return prev;
-        }
-      }
 
-      setHistory(h => [cloneBlocks(prev), ...h].slice(0, 50));
-      return insertBlock(removedResult.blocks, targetParentId, nextIndex, removedResult.removed);
-    });
-  };
+        const movedBlock = removedResult.removed;
+        historyRef.current = pushHistory(
+          historyRef.current,
+          prev,
+          `Moved ${movedBlock.type}`
+        );
+        setCanUndoState(true);
+        setCanRedoState(false);
+        return insertBlock(removedResult.blocks, targetParentId, nextIndex, removedResult.removed);
+      });
+    },
+    []
+  );
 
-  const undo = () => {
-    setHistory(prev => {
-      if (!prev.length) return prev;
-      const [last, ...rest] = prev;
-      setBlocks(last);
+  const undo = useCallback(() => {
+    const result = performUndo(historyRef.current);
+    if (result.blocks) {
+      setBlocks(result.blocks);
       setSelectedBlockId(null);
-      return rest;
-    });
-  };
+    }
+    historyRef.current = result.manager;
+    setCanUndoState(checkCanUndo(historyRef.current));
+    setCanRedoState(checkCanRedo(historyRef.current));
+  }, []);
 
-  const canUndo = history.length > 0;
+  const redo = useCallback(() => {
+    const result = performRedo(historyRef.current);
+    if (result.blocks) {
+      setBlocks(result.blocks);
+      setSelectedBlockId(null);
+    }
+    historyRef.current = result.manager;
+    setCanUndoState(checkCanUndo(historyRef.current));
+    setCanRedoState(checkCanRedo(historyRef.current));
+  }, []);
 
   const value: BlockContextType = {
     blocks,
@@ -283,7 +355,9 @@ export function BlockProvider({ children }: { children: ReactNode }) {
     loadProject,
     moveBlock,
     undo,
-    canUndo,
+    redo,
+    canUndo: canUndoState,
+    canRedo: canRedoState,
   };
 
   return <BlockContext.Provider value={value}>{children}</BlockContext.Provider>;

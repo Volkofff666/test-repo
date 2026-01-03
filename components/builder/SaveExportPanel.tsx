@@ -13,6 +13,8 @@ import {
   saveToLocalStorage,
 } from '@/lib/project-storage';
 import { ImportModal } from './ImportModal';
+import { UndoRedoControls } from './UndoRedoControls';
+import { useKeyboardShortcuts } from '@/lib/keyboard-shortcuts';
 
 export function SaveExportPanel() {
   const {
@@ -23,7 +25,7 @@ export function SaveExportPanel() {
     setProjectName,
     loadProject,
     undo,
-    canUndo,
+    redo,
   } = useBlocks();
 
   const [toast, setToast] = useState<string | null>(null);
@@ -59,12 +61,17 @@ export function SaveExportPanel() {
     }
   }, []);
 
+  useKeyboardShortcuts(undo, redo);
 
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 2000);
     return () => clearTimeout(t);
   }, [toast]);
+
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+  }, []);
 
   const buildCurrentProject = useCallback(
     (metadata?: ProjectState['metadata']) =>
@@ -81,26 +88,26 @@ export function SaveExportPanel() {
       const project = buildCurrentProject();
       saveToLocalStorage(project);
       setHasPersisted(true);
-      setToast('Saved');
+      showToast('Saved');
       refreshRecent();
     } catch (e) {
       console.error(e);
-      setToast('Save failed (LocalStorage quota?)');
+      showToast('Save failed (LocalStorage quota?)');
     }
-  }, [buildCurrentProject, refreshRecent]);
+  }, [buildCurrentProject, refreshRecent, showToast]);
 
   const exportJSON = useCallback(() => {
     const project = buildCurrentProject({ exportedAt: new Date().toISOString() });
     downloadJSON(project);
-    setToast('Downloaded JSON');
-  }, [buildCurrentProject]);
+    showToast('Downloaded JSON');
+  }, [buildCurrentProject, showToast]);
 
   const loadRecent = useCallback(
     (id: string) => {
       if (!id) return;
       const project = loadFromLocalStorage(id);
       if (!project) {
-        setToast('Failed to load project');
+        showToast('Failed to load project');
         return;
       }
 
@@ -111,9 +118,9 @@ export function SaveExportPanel() {
 
       loadProject(project);
       setHasPersisted(true);
-      setToast('Project loaded');
+      showToast('Project loaded');
     },
-    [blocks.length, loadProject]
+    [blocks.length, loadProject, showToast]
   );
 
   useEffect(() => {
@@ -154,28 +161,23 @@ export function SaveExportPanel() {
             <input
               value={projectName}
               onChange={e => setProjectName(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-sm min-w-[240px] max-w-[420px]"
+              className="px-2 py-1 border border-gray-300 rounded text-sm min-w-[240px] max-w-[420px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Untitled Project"
             />
           </div>
           <div className="text-xs text-gray-500 whitespace-nowrap">{totalBlocks} blocks</div>
-          {toast && <div className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded">{toast}</div>}
+          {toast && <div className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded fade-in">{toast}</div>}
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={undo}
-            disabled={!canUndo}
-            className="px-3 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-          >
-            Undo
-          </button>
+          <div className="flex items-center gap-1 mr-2">
+            <UndoRedoControls />
+          </div>
 
           <button
             type="button"
             onClick={save}
-            className="px-3 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+            className="px-3 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
             Save
           </button>
@@ -183,7 +185,7 @@ export function SaveExportPanel() {
           <button
             type="button"
             onClick={exportJSON}
-            className="px-3 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50"
+            className="px-3 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50 transition-colors"
           >
             Export JSON
           </button>
@@ -191,7 +193,7 @@ export function SaveExportPanel() {
           <button
             type="button"
             onClick={() => setImportOpen(true)}
-            className="px-3 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50"
+            className="px-3 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50 transition-colors"
           >
             Import
           </button>
@@ -200,7 +202,7 @@ export function SaveExportPanel() {
             <select
               value={selectedRecentId}
               onChange={e => setSelectedRecentId(e.target.value)}
-              className="px-2 py-2 text-sm border border-gray-300 rounded max-w-[260px]"
+              className="px-2 py-2 text-sm border border-gray-300 rounded max-w-[260px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               aria-label="Recent projects"
             >
               {recent.length === 0 ? (
@@ -218,7 +220,7 @@ export function SaveExportPanel() {
               type="button"
               onClick={() => loadRecent(selectedRecentId)}
               disabled={!selectedRecentId}
-              className="px-3 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
               Load
             </button>
@@ -230,11 +232,11 @@ export function SaveExportPanel() {
                 const ok = window.confirm('Delete selected project from LocalStorage?');
                 if (!ok) return;
                 deleteFromLocalStorage(selectedRecentId);
-                setToast('Deleted');
+                showToast('Deleted');
                 refreshRecent();
               }}
               disabled={!selectedRecentId}
-              className="px-3 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
               Delete
             </button>
@@ -253,7 +255,7 @@ export function SaveExportPanel() {
             }
             loadProject(project);
             setHasPersisted(true);
-            setToast('Imported');
+            showToast('Imported');
             refreshRecent();
           }}
         />

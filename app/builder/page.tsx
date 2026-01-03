@@ -2,7 +2,7 @@
 
 import { BlockProvider } from '@/lib/block-context';
 import { Palette } from '@/components/builder/Palette';
-import { Canvas } from '@/components/builder/Canvas';
+import { ResponsivePreview } from '@/components/builder/ResponsivePreview';
 import { RightPanel } from '@/components/builder/RightPanel';
 import { SaveExportPanel } from '@/components/builder/SaveExportPanel';
 
@@ -13,7 +13,7 @@ export default function BuilderPage() {
         <SaveExportPanel />
         <div className="flex flex-1 overflow-hidden">
           <Palette />
-          <Canvas />
+          <ResponsivePreview />
           <RightPanel />
         </div>
       </div>

@@ -1,5 +1,14 @@
 export type BlockType = 'container' | 'text' | 'button' | 'heading' | 'header';
 
+export interface ResponsiveProperty {
+  mobile?: string;
+  tablet?: string;
+  desktop?: string;
+  default?: string;
+}
+
+export type ResponsiveValue<T> = T | ResponsiveProperty;
+
 export interface MenuItem {
   id: string;
   label: string;
@@ -98,6 +107,7 @@ export interface Block {
     logoColor?: string;
     logoFontSize?: string;
     marginBottom?: string;
+    gap?: string;
     menuItems?: MenuItem[];
     menuItemColor?: string;
     menuItemHoverColor?: string;
@@ -129,5 +139,7 @@ export interface BlockContextType {
 
   moveBlock: (blockId: string, targetParentId: string | null, targetIndex: number) => void;
   undo: () => void;
+  redo: () => void;
   canUndo: boolean;
+  canRedo: boolean;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { Block } from '@/lib/types';
+import { getAllAdvancedStyles } from '@/lib/styling-utils';
 
 interface BlockHeaderProps {
   block: Block;
@@ -16,13 +17,11 @@ export function BlockHeader({ block, isSelected, onSelect, onRemove }: BlockHead
   const containerStyle: React.CSSProperties = {
     backgroundColor: block.properties.backgroundColor || '#ffffff',
     padding: block.properties.padding || '1rem 2rem',
-    borderRadius: block.properties.borderRadius || '0px',
-    boxShadow: block.properties.boxShadow || '0 2px 8px rgba(0, 0, 0, 0.1)',
-    border: block.properties.border || 'none',
     marginBottom: block.properties.marginBottom || '0',
     display: 'flex',
     justifyContent: block.properties.justifyContent || 'space-between',
     alignItems: 'center',
+    ...getAllAdvancedStyles(block),
   };
 
   const logoStyle: React.CSSProperties = {

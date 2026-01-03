@@ -1,6 +1,7 @@
 'use client';
 
 import { Block } from '@/lib/types';
+import { getAllAdvancedStyles } from '@/lib/styling-utils';
 
 interface BlockButtonProps {
   block: Block;
@@ -16,11 +17,10 @@ export function BlockButton({ block, isSelected, onSelect, onRemove }: BlockButt
     padding: block.properties.padding || '0.5rem 1rem',
     backgroundColor: block.properties.backgroundColor || '#0066cc',
     color: block.properties.color || 'white',
-    border: 'none',
-    borderRadius: '0.25rem',
     cursor: 'pointer',
     fontWeight: 500,
     fontSize: block.properties.fontSize || '1rem',
+    ...getAllAdvancedStyles(block),
   };
 
   return (

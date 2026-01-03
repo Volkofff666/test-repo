@@ -1,6 +1,7 @@
 'use client';
 
 import { Block } from '@/lib/types';
+import { getAllAdvancedStyles } from '@/lib/styling-utils';
 
 interface BlockTextProps {
   block: Block;
@@ -16,6 +17,7 @@ export function BlockText({ block, isSelected, onSelect, onRemove }: BlockTextPr
     fontSize: block.properties.fontSize || '1rem',
     color: block.properties.color || '#666',
     lineHeight: 1.5,
+    ...getAllAdvancedStyles(block),
   };
 
   return (

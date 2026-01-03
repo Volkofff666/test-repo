@@ -137,65 +137,6 @@ export function HeaderPropertyEditor() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Border Radius
-          </label>
-          <input
-            type="text"
-            value={selectedBlock.properties.borderRadius || ''}
-            onChange={(e) => handlePropertyChange('borderRadius', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
-            placeholder="e.g., 8px or 0.5rem"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Box Shadow
-          </label>
-          <input
-            type="text"
-            value={selectedBlock.properties.boxShadow || ''}
-            onChange={(e) => handlePropertyChange('boxShadow', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
-            placeholder="e.g., 0 2px 8px rgba(0,0,0,0.1)"
-          />
-          <div className="flex gap-2 mt-2">
-            <button
-              onClick={() => handlePropertyChange('boxShadow', '0 1px 3px rgba(0,0,0,0.1)')}
-              className="flex-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
-            >
-              Subtle
-            </button>
-            <button
-              onClick={() => handlePropertyChange('boxShadow', '0 2px 8px rgba(0,0,0,0.1)')}
-              className="flex-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
-            >
-              Medium
-            </button>
-            <button
-              onClick={() => handlePropertyChange('boxShadow', '0 4px 16px rgba(0,0,0,0.15)')}
-              className="flex-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
-            >
-              Strong
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Border
-          </label>
-          <input
-            type="text"
-            value={selectedBlock.properties.border || ''}
-            onChange={(e) => handlePropertyChange('border', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
-            placeholder="e.g., 1px solid #ccc"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
             Margin Bottom
           </label>
           <input

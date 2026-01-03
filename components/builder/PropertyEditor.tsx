@@ -2,6 +2,7 @@
 
 import { useBlocks } from '@/lib/block-context';
 import { HeaderPropertyEditor } from './HeaderPropertyEditor';
+import { AdvancedPropertyEditor } from './AdvancedPropertyEditor';
 
 export function PropertyEditor() {
   const { getSelectedBlock, updateBlock } = useBlocks();
@@ -20,7 +21,14 @@ export function PropertyEditor() {
 
   // Render specialized editor for header blocks
   if (selectedBlock.type === 'header') {
-    return <HeaderPropertyEditor />;
+    return (
+      <div className="pb-20">
+        <HeaderPropertyEditor />
+        <div className="px-4">
+          <AdvancedPropertyEditor block={selectedBlock} updateBlock={updateBlock} />
+        </div>
+      </div>
+    );
   }
 
   const handlePropertyChange = (property: string, value: string) => {
@@ -28,7 +36,7 @@ export function PropertyEditor() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 pb-20">
       <h3 className="text-lg font-semibold mb-4 text-gray-800">Properties</h3>
       
       <div className="space-y-4">
@@ -153,6 +161,8 @@ export function PropertyEditor() {
             placeholder="e.g., 1rem or 16px"
           />
         </div>
+
+        <AdvancedPropertyEditor block={selectedBlock} updateBlock={updateBlock} />
       </div>
     </div>
   );

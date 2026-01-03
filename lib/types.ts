@@ -22,14 +22,82 @@ export interface Block {
     modifiers?: Record<string, boolean>;
     tag?: 'h1' | 'h2' | 'h3';
 
+    // Advanced Styling
+    border?: {
+      width?: string;
+      style?: 'solid' | 'dashed' | 'dotted' | 'double' | 'none';
+      color?: string;
+      top?: string;
+      right?: string;
+      bottom?: string;
+      left?: string;
+    } | string;
+    
+    borderRadius?: {
+      all?: string;
+      topLeft?: string;
+      topRight?: string;
+      bottomRight?: string;
+      bottomLeft?: string;
+    } | string;
+    
+    boxShadow?: {
+      preset?: 'none' | 'subtle' | 'medium' | 'strong';
+      custom?: string;
+    } | string;
+    
+    gradient?: {
+      enabled?: boolean;
+      type?: 'linear' | 'radial';
+      angle?: number;
+      color1?: string;
+      color2?: string;
+      color3?: string;
+      stops?: Array<{color: string; position: number}>;
+    };
+    
+    opacity?: number;
+    
+    textShadow?: {
+      offsetX?: string;
+      offsetY?: string;
+      blur?: string;
+      color?: string;
+    };
+    
+    filters?: {
+      blur?: number;
+      brightness?: number;
+      contrast?: number;
+      saturate?: number;
+      hueRotate?: number;
+      invert?: number;
+      sepia?: number;
+      grayscale?: number;
+    };
+    
+    transform?: {
+      rotate?: number;
+      scaleX?: number;
+      scaleY?: number;
+      skewX?: number;
+      skewY?: number;
+      translateX?: string;
+      translateY?: string;
+    };
+    
+    transition?: {
+      enabled?: boolean;
+      duration?: string;
+      easing?: 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'linear';
+      properties?: string[];
+    };
+
     // Header-specific properties
     logoText?: string;
     logoColor?: string;
     logoFontSize?: string;
     marginBottom?: string;
-    borderRadius?: string;
-    boxShadow?: string;
-    border?: string;
     menuItems?: MenuItem[];
     menuItemColor?: string;
     menuItemHoverColor?: string;

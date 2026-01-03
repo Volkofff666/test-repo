@@ -6,6 +6,7 @@ import { useBlocks } from '@/lib/block-context';
 import { getDraggedBlockId } from '@/lib/drag-handler';
 import { DropZone } from '@/components/builder/DropZone';
 import { BlockRenderer } from './BlockRenderer';
+import { getAllAdvancedStyles } from '@/lib/styling-utils';
 
 interface BlockContainerProps {
   block: Block;
@@ -21,6 +22,7 @@ export function BlockContainer({ block, isSelected, onSelect, onRemove }: BlockC
   const style: React.CSSProperties = {
     backgroundColor: block.properties.backgroundColor,
     padding: block.properties.padding || '1rem',
+    ...getAllAdvancedStyles(block),
   };
 
   const children = block.properties.children ?? [];

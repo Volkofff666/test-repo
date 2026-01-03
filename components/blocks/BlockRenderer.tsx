@@ -1,7 +1,9 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { Block } from '@/lib/types';
 import { useBlocks } from '@/lib/block-context';
+import { setDraggedBlockId } from '@/lib/drag-handler';
 import { BlockContainer } from './BlockContainer';
 import { BlockHeading } from './BlockHeading';
 import { BlockText } from './BlockText';
@@ -24,9 +26,11 @@ export function BlockRenderer({ block }: BlockRendererProps) {
     removeBlock(block.id);
   };
 
+  let content: ReactNode = null;
+
   switch (block.type) {
     case 'container':
-      return (
+      content = (
         <BlockContainer
           block={block}
           isSelected={isSelected}
@@ -34,8 +38,9 @@ export function BlockRenderer({ block }: BlockRendererProps) {
           onRemove={handleRemove}
         />
       );
+      break;
     case 'heading':
-      return (
+      content = (
         <BlockHeading
           block={block}
           isSelected={isSelected}
@@ -43,8 +48,9 @@ export function BlockRenderer({ block }: BlockRendererProps) {
           onRemove={handleRemove}
         />
       );
+      break;
     case 'text':
-      return (
+      content = (
         <BlockText
           block={block}
           isSelected={isSelected}
@@ -52,8 +58,9 @@ export function BlockRenderer({ block }: BlockRendererProps) {
           onRemove={handleRemove}
         />
       );
+      break;
     case 'button':
-      return (
+      content = (
         <BlockButton
           block={block}
           isSelected={isSelected}
@@ -61,8 +68,9 @@ export function BlockRenderer({ block }: BlockRendererProps) {
           onRemove={handleRemove}
         />
       );
+      break;
     case 'header':
-      return (
+      content = (
         <BlockHeader
           block={block}
           isSelected={isSelected}
@@ -70,7 +78,27 @@ export function BlockRenderer({ block }: BlockRendererProps) {
           onRemove={handleRemove}
         />
       );
+      break;
     default:
-      return null;
+      content = null;
   }
+
+  if (!content) return null;
+
+  return (
+    <div
+      draggable
+      className="cursor-move transition-opacity"
+      onDragStart={e => {
+        e.stopPropagation();
+        setDraggedBlockId(e, block.id);
+        e.currentTarget.classList.add('opacity-60');
+      }}
+      onDragEnd={e => {
+        e.currentTarget.classList.remove('opacity-60');
+      }}
+    >
+      {content}
+    </div>
+  );
 }

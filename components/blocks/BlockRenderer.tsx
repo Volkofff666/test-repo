@@ -6,6 +6,7 @@ import { BlockContainer } from './BlockContainer';
 import { BlockHeading } from './BlockHeading';
 import { BlockText } from './BlockText';
 import { BlockButton } from './BlockButton';
+import { BlockHeader } from './BlockHeader';
 
 interface BlockRendererProps {
   block: Block;
@@ -54,6 +55,15 @@ export function BlockRenderer({ block }: BlockRendererProps) {
     case 'button':
       return (
         <BlockButton
+          block={block}
+          isSelected={isSelected}
+          onSelect={handleSelect}
+          onRemove={handleRemove}
+        />
+      );
+    case 'header':
+      return (
+        <BlockHeader
           block={block}
           isSelected={isSelected}
           onSelect={handleSelect}

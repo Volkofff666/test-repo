@@ -1,6 +1,7 @@
 'use client';
 
 import { useBlocks } from '@/lib/block-context';
+import { HeaderPropertyEditor } from './HeaderPropertyEditor';
 
 export function PropertyEditor() {
   const { getSelectedBlock, updateBlock } = useBlocks();
@@ -15,6 +16,11 @@ export function PropertyEditor() {
         </p>
       </div>
     );
+  }
+
+  // Render specialized editor for header blocks
+  if (selectedBlock.type === 'header') {
+    return <HeaderPropertyEditor />;
   }
 
   const handlePropertyChange = (property: string, value: string) => {

@@ -64,6 +64,35 @@ function createBlock(type: BlockType): Block {
         },
       };
     
+    case 'header':
+      return {
+        ...baseBlock,
+        bemName: 'header',
+        properties: {
+          logoText: 'Your Logo',
+          logoColor: '#333333',
+          logoFontSize: '24px',
+          backgroundColor: '#ffffff',
+          padding: '1rem 2rem',
+          borderRadius: '0px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          border: 'none',
+          marginBottom: '1rem',
+          menuItems: [
+            { id: generateBlockId(), label: 'Home', href: '#home' },
+            { id: generateBlockId(), label: 'About', href: '#about' },
+            { id: generateBlockId(), label: 'Contact', href: '#contact' },
+          ],
+          menuItemColor: '#666666',
+          menuItemHoverColor: '#0066cc',
+          menuItemFontSize: '14px',
+          menuItemPadding: '0.5rem 1rem',
+          menuItemGap: '1.5rem',
+          justifyContent: 'space-between',
+          alignment: 'center',
+        },
+      };
+    
     default:
       return baseBlock;
   }
@@ -78,6 +107,7 @@ export function Palette() {
   };
 
   const blockTypes: { type: BlockType; label: string; icon: string }[] = [
+    { type: 'header', label: 'Header', icon: '🎯' },
     { type: 'container', label: 'Container', icon: '📦' },
     { type: 'heading', label: 'Heading', icon: '📝' },
     { type: 'text', label: 'Text', icon: '📄' },

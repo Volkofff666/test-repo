@@ -1,6 +1,10 @@
 'use client';
 
+import { Fragment, useState } from 'react';
 import { Block } from '@/lib/types';
+import { useBlocks } from '@/lib/block-context';
+import { getDraggedBlockId } from '@/lib/drag-handler';
+import { DropZone } from '@/components/builder/DropZone';
 import { BlockRenderer } from './BlockRenderer';
 
 interface BlockContainerProps {
@@ -11,25 +15,43 @@ interface BlockContainerProps {
 }
 
 export function BlockContainer({ block, isSelected, onSelect, onRemove }: BlockContainerProps) {
+  const { moveBlock } = useBlocks();
+  const [isDropOver, setIsDropOver] = useState(false);
+
   const style: React.CSSProperties = {
     backgroundColor: block.properties.backgroundColor,
     padding: block.properties.padding || '1rem',
   };
 
+  const children = block.properties.children ?? [];
+
   return (
     <div
       className={`relative group border-2 transition-colors ${
         isSelected ? 'border-blue-500' : 'border-transparent hover:border-gray-300'
-      }`}
+      } ${isDropOver ? 'ring-2 ring-blue-300' : ''}`}
       style={style}
-      onClick={(e) => {
+      onClick={e => {
         e.stopPropagation();
         onSelect();
+      }}
+      onDragOver={e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setIsDropOver(true);
+      }}
+      onDragLeave={() => setIsDropOver(false)}
+      onDrop={e => {
+        e.preventDefault();
+        setIsDropOver(false);
+        const draggedId = getDraggedBlockId(e);
+        if (!draggedId) return;
+        moveBlock(draggedId, block.id, children.length);
       }}
     >
       {isSelected && (
         <button
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation();
             onRemove();
           }}
@@ -38,14 +60,19 @@ export function BlockContainer({ block, isSelected, onSelect, onRemove }: BlockC
           Delete
         </button>
       )}
-      {block.properties.children && block.properties.children.length > 0 ? (
+
+      {children.length > 0 ? (
         <div className="space-y-2">
-          {block.properties.children.map((child) => (
-            <BlockRenderer key={child.id} block={child} />
+          <DropZone parentId={block.id} index={0} />
+          {children.map((child, idx) => (
+            <Fragment key={child.id}>
+              <BlockRenderer block={child} />
+              <DropZone parentId={block.id} index={idx + 1} />
+            </Fragment>
           ))}
         </div>
       ) : (
-        <div className="text-gray-400 text-sm italic">Empty container</div>
+        <div className="text-gray-400 text-sm italic">Empty container (drop blocks here)</div>
       )}
     </div>
   );

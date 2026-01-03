@@ -12,6 +12,7 @@ export interface Block {
   type: BlockType;
   bemName: string;
   properties: {
+    name?: string;
     text?: string;
     backgroundColor?: string;
     padding?: string;
@@ -20,7 +21,7 @@ export interface Block {
     children?: Block[];
     modifiers?: Record<string, boolean>;
     tag?: 'h1' | 'h2' | 'h3';
-    
+
     // Header-specific properties
     logoText?: string;
     logoColor?: string;
@@ -43,9 +44,22 @@ export interface Block {
 export interface BlockContextType {
   blocks: Block[];
   selectedBlockId: string | null;
+
+  projectId: string;
+  projectName: string;
+  projectCreatedAt: string;
+  setProjectName: (name: string) => void;
+
   addBlock: (block: Block) => void;
   removeBlock: (id: string) => void;
   updateBlock: (id: string, properties: Partial<Block['properties']>) => void;
   selectBlock: (id: string | null) => void;
   getSelectedBlock: () => Block | null;
+
+  replaceBlocks: (blocks: Block[]) => void;
+  loadProject: (project: { id: string; name: string; createdAt?: string; blocks: Block[] }) => void;
+
+  moveBlock: (blockId: string, targetParentId: string | null, targetIndex: number) => void;
+  undo: () => void;
+  canUndo: boolean;
 }
